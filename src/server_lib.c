@@ -106,6 +106,20 @@ void* HandleMessage(void *data) {
   return 0;
 }
 
+int clientAccept() {
+  int n = 0;
+  if (pthread_mutex_lock(&clientMutex) == 0) {
+    client_data.client_number++;
+    n = client_data.client_number;
+    if (pthread_mutex_unlock(&clientMutex) != 0){
+      fprintf(stderr, "Failed to unlock mutex! Aborting... \n");
+      abort();
+    }
+  }
+
+  return n;
+}
+
 void clientDone() {
   if (pthread_mutex_lock(&clientMutex) == 0) {
     client_data.client_number --;

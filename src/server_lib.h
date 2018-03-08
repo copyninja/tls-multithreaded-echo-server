@@ -51,6 +51,9 @@ int echo_content(int *);
 void socket_nonblocking(int *);
 void disable_nagles_algo(int *);
 void* HandleMessage(void*);
+
+int clientAccept();
 void clientDone();
+
 
 #endif /* __SERVER_LIB_H__ */
