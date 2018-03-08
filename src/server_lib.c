@@ -12,11 +12,6 @@ Server setup_socket(void) {
   if (err != 0)
     handle_error("setsockopt");
 
-  /* /\* Make socket non blocking *\/ */
-  /* err = fcntl(sd, F_SETFL, O_ASYNC | O_NONBLOCK); */
-  /* if (err != 0) */
-  /*   handle_error("fcntl"); */
-
   struct sockaddr_in sa;
   memset(&sa, '\0', sizeof(sa));
   sa.sin_family = AF_INET;
