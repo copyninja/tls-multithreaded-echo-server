@@ -37,7 +37,6 @@ int echo_content(int *connfd) {
 
   if (size > 0) {
     if (strstr((const char*)buffer, "quit") != NULL){
-      printf("Closing connection with client\n");
       send(*connfd, "bye\n", 4, 0);
       return -10;
     }
@@ -72,6 +71,8 @@ void* HandleMessage(void *data) {
   ThreadDataT *t = (ThreadDataT*)data;
   fd_set testfd;
 
+  char buf[33] = {'\0'};
+
   FD_ZERO(&testfd);
 
   int rv = 0;
@@ -91,6 +92,8 @@ void* HandleMessage(void *data) {
         if (rv < 0) {
           if (rv != -10)
             perror("echo_content failed");
+          printf("Client %d (%s) is done. Closing connection!\n", t->number,
+                 inet_ntop(AF_INET, &t->sa.sin_addr, buf, sizeof(buf)));
           close(t->fd);
           free(t);
           clientDone();

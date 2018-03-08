@@ -42,6 +42,8 @@ pthread_mutex_t clientMutex;
 
 typedef struct {
   int fd;
+  int number;
+  struct sockaddr_in sa;
 } ThreadDataT;
 
 Server setup_socket(void);
