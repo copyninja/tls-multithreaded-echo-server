@@ -25,24 +25,24 @@ int main(int argc, char *argv[]) {
       handle_error("accept failed");
 
     if (connfd > 0) {
-      client_data.client_number++;
+      int client_number = clientAccept();
       printf("- connection accepted from %s port %d client: %d\n",
              inet_ntop(AF_INET, &s.sa.sin_addr, buf, sizeof(buf)),
-             s.sa.sin_port, client_data.client_number);
+             s.sa.sin_port, client_number);
       if (client_data.client_number <= MAX_CLIENT) {
         socket_nonblocking(&connfd);
         disable_nagles_algo(&connfd);
 
         /* Send the client number to client first */
-        send(connfd, (void *)&client_data.client_number,
-                  sizeof(client_data.client_number), 0);
+        send(connfd, (void *)&client_number,
+                  sizeof(client_number), 0);
 
         ThreadDataT *t = (ThreadDataT*)malloc(sizeof(ThreadDataT));
         t->fd = connfd;
-        t->number = client_data.client_number;
+        t->number = client_number;
         t->sa = s.sa;
 
-        if (pthread_create(&clients[client_data.client_number-1], NULL, HandleMessage, (void*)t) != 0){
+        if (pthread_create(&clients[client_number-1], NULL, HandleMessage, (void*)t) != 0){
           handle_error("pthread_create failed");
         }
       }
