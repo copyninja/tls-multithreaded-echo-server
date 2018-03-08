@@ -30,7 +30,7 @@ Server setup_socket(void) {
 }
 
 int echo_content(int *connfd) {
-  unsigned char buffer[2048];
+  unsigned char buffer[2048] = {'\0'};
   int size = recv(*connfd, buffer, sizeof(buffer), 0);
   if (size < 0)
     handle_error("recv");
@@ -93,6 +93,7 @@ void* HandleMessage(void *data) {
             perror("echo_content failed");
           close(t->fd);
           free(t);
+          clientDone();
           pthread_exit(NULL);
         }
       }
@@ -100,4 +101,14 @@ void* HandleMessage(void *data) {
   }
 
   return 0;
+}
+
+void clientDone() {
+  if (pthread_mutex_lock(&clientMutex) == 0) {
+    client_data.client_number --;
+    if (pthread_mutex_unlock(&clientMutex) != 0) {
+      fprintf(stderr, "Failed to unlock mutex! Aborting..\n");
+      abort();
+    }
+  }
 }

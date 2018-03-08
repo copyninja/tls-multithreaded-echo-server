@@ -37,7 +37,8 @@ typedef struct {
   short client_number;
 } ClientDataT;
 
-ClientDataT client_data;;
+ClientDataT client_data;
+pthread_mutex_t clientMutex;
 
 typedef struct {
   int fd;
@@ -48,5 +49,6 @@ int echo_content(int *);
 void socket_nonblocking(int *);
 void disable_nagles_algo(int *);
 void* HandleMessage(void*);
+void clientDone();
 
 #endif /* __SERVER_LIB_H__ */
