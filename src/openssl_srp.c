@@ -38,6 +38,22 @@ void *processConnectionRequest(void *data) {
   pthread_exit(NULL);
 }
 
+void gracefullyRefuse(BIO *bio) {
+  if (BIO_do_handshake(bio) <= 0){
+    fprintf(stderr, "Failed to complete SSL Handshake!..\n");
+    ERR_print_errors_fp(stderr);
+    BIO_free(bio);
+    return;
+  }
+
+
+  BIO_write(bio, "Maximum clients connected! Refusing more connection...\n", 56);
+  BIO_flush(bio);
+  close(BIO_get_fd(bio, NULL));
+  BIO_free(bio);
+
+}
+
 int main(int argc, char *argv[]) {
   pthread_mutex_init(&srpDataMutex, NULL);
   initOpenSSL();
@@ -104,6 +120,9 @@ int main(int argc, char *argv[]) {
           fprintf(stderr, "Failed to create thread");
           goto cleanup;
         }
+      } else {
+        gracefullyRefuse(sbio);
+        clientDone();
       }
     }
   }
