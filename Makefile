@@ -13,6 +13,12 @@ LIBS = -lssl -lcrypto -lpthread
 SRCS = $(filter-out $(filter_files), $(SRC))
 endif
 
+ifneq (, $(findstring srp, $(SSL)))
+filter_files = src/server.c src/openssl_x509.c
+LIBS = -lssl -lcrypto -lpthread
+SRCS = $(filter-out $(filter_files), $(SRC))
+endif
+
 OBJS = $(patsubst %/*.o, *.o, $(SRCS:.c=.o))
 CCFLAGS = -Wall -ggdb
 
