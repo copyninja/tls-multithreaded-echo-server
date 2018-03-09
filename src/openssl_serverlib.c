@@ -122,7 +122,10 @@ int sslHandShake(SSL *ssl) {
   }
 }
 
-void sigint_handler(int s) { terminated = true; }
+void sigint_handler(int s) {
+  printf("Received signal: %d\n", s);
+  terminated = true;
+}
 
 void setsighandler() {
   struct sigaction sigact;
