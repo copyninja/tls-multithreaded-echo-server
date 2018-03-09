@@ -133,3 +133,70 @@ void setsighandler() {
   sigact.sa_handler = sigint_handler;
   CHECK(sigaction(SIGINT, &sigact, NULL) == 0);
 }
+
+int srpCallback(SSL *s, int *ad, void *arg) {
+  (void)arg;
+  (void)ad;
+
+  if (pthread_mutex_lock(&srpDataMutex) == 0) {
+    /* On first call we are not ready return so caller gets WANT_X509_LOOKUP */
+    if (srpData == NULL) {
+      pthread_mutex_unlock(&srpDataMutex);
+      return -1;
+    }
+
+    char *username = SSL_get_srp_username(s);
+    CHECK(username != NULL);
+
+    SRP_user_pwd *p = SRP_VBASE_get1_by_user(srpData, username);
+    if (p == NULL) {
+      fprintf(stderr, "User %s does not exist!\n", username);
+      pthread_mutex_unlock(&srpDataMutex);
+      return SSL3_AL_FATAL;
+    }
+
+    CHECK(SSL_set_srp_server_param(s, p->N, p->g, p->s, p->v, NULL) == SSL_OK);
+    SRP_user_pwd_free(p);
+
+    pthread_mutex_unlock(&srpDataMutex);
+    return SSL_ERROR_NONE;
+  }
+
+  return -1;
+}
+
+void setupSrpData() {
+  if (pthread_mutex_lock(&srpDataMutex) == 0) {
+    if (srpData != NULL) {
+      pthread_mutex_unlock(&srpDataMutex);
+      /* Some thread has already setup data */
+      return;
+    }
+
+    srpData = SRP_VBASE_new(NULL);
+    CHECK(srpData != NULL);
+
+    SRP_user_pwd *p = (SRP_user_pwd *)OPENSSL_malloc(sizeof(SRP_user_pwd));
+    CHECK(p != NULL);
+
+    SRP_gN *gN = SRP_get_default_gN(SRPGROUP);
+    CHECK(gN != NULL);
+
+    char *srpCheck = SRP_check_known_gN_param(gN->g, gN->N);
+    CHECK(srpCheck != NULL);
+
+    BIGNUM *salt = NULL, *verifier = NULL;
+    CHECK(SRP_create_verifier_BN(USERNAME, PASSWORD, &salt, &verifier, gN->N,
+                                 gN->g));
+
+    p->id = OPENSSL_strdup(USERNAME);
+    p->g = gN->g;
+    p->N = gN->N;
+    p->s = salt;
+    p->v = verifier;
+    p->info = NULL;
+
+    sk_SRP_user_pwd_push(srpData->users_pwd, p);
+    pthread_mutex_unlock(&srpDataMutex);
+  }
+}

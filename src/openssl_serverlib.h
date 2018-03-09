@@ -10,6 +10,7 @@
 #include <assert.h>
 
 #include <signal.h>
+#include <pthread.h>
 
 #include <sys/select.h>
 #include <sys/types.h>
@@ -18,6 +19,10 @@
 #define PRIVKEY_FILE "privkey.pem"
 #define BUFLEN 4096
 #define SSL_OK 1
+
+#define USERNAME "vasudev"
+#define PASSWORD "kamath"
+#define SRPGROUP "1536"
 
 #define CHECK(e) ((e) ? (void)(0): onError(#e, __FILE__, __LINE__, true))
 
@@ -28,6 +33,9 @@ typedef struct {
 } SSLThreadDataT;
 
 extern volatile bool terminated;
+static SRP_VBASE *srpData;
+
+pthread_mutex_t srpDataMutex;
 
 void initOpenSSL();
 void sslCleanup();
@@ -44,4 +52,8 @@ void onError(const char*, const char*, int, bool);
 
 void sigint_handler(int);
 void setsighandler();
+
+/* SRP related functions */
+void setupSrpData();
+int srpCallback(SSL*,int *, void*);
 #endif
